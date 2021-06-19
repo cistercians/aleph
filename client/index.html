@@ -12,12 +12,12 @@
 
     <style>
       html, body {
-          overflow: hidden;
           width: 100%;
           height: 100%;
           margin: 0;
           padding: 0;
           background-color: black;
+          overflow-y: scroll;
       }
 
       h1 {
@@ -68,12 +68,10 @@
 
       #feed {
         display: none;
-        overflow-y: scroll;
       }
 
       #add {
         display: none;
-        overflow-y: scroll;
       }
 
       #url-extract {
@@ -90,20 +88,8 @@
       }
 
       #output {
+        overflow-y: scroll;
         display: none;
-        overflow-y: auto;
-      }
-
-      #out-key {
-        color: #FDEBD0;
-      }
-
-      #out-ent {
-        color: #D4EFDF;
-      }
-
-      #out-loc {
-        color: #D6EAF8;
       }
     </style>
   </head>
@@ -118,8 +104,8 @@
       </div>
       <div id='menu'>
         <button id='view-feed' onclick='clickViewFeed()'>VIEW FEED</button>
-        <button id='add-keywords' onclick='clickAddKeywords()'>ADD KEYWORDS</button>
-        <button id='extract-url' onclick='clickExtractUrl()'>EXTRACT FROM URL</button>
+        <button id='add-keywords' onclick='clickAddKeywords()'>KEYWORDS</button>
+        <button id='extract-url' onclick='clickExtractUrl()'>URL EXTRACT</button>
         <br>
         <br>
         <hr>
@@ -128,28 +114,17 @@
       <div id='feed'>
       </div>
       <div id ='add'>
-        <label for='keyword-input'>KEYWORD:</label>
+        <select id='type-input'>
+          <option value=null></option>
+          <option value='ent'>👤</option>
+          <option value='org'>🏢</option>
+          <option value='loc'>🌐</option>
+        </select>
         <input type='text' id='keyword-input' name='keyword-input'>
-        <input type='submit' id='keyword-input-add' value='ADD' onclick='addKeyword(inputKeyword.value)'>
+        <input type='submit' id='keyword-input-add' value='ADD' onclick='addKeyword(inputType.value,inputKeyword.value)'>
         <br>
         <div>
           <ul id='keyword-list'></ul>
-        </div>
-        <br>
-        <label for='location-input'>LOCATION:</label>
-        <input type='text' id='location-input' name='location-input'>
-        <input type='submit' id='location-input-add' value='ADD' onclick='addLocation(inputLocation.value)'>
-        <br>
-        <div>
-          <ul id='location-list'></ul>
-        </div>
-        <br>
-        <label for='entity-input'>ENTITY:</label>
-        <input type='text' id='entity-input' name='entity-input'>
-        <input type='submit' id='entity-input-add' value='ADD' onclick='addEntity(inputEntity.value)'>
-        <br>
-        <div>
-          <ul id='entity-list'></ul>
         </div>
         <br>
         <br>
@@ -168,8 +143,6 @@
         <div id='output'>
           <p>OUTPUT:</p>
           <div id='out-key'></div>
-          <div id='out-ent'></div>
-          <div id='out-loc'></div>
         </div>
       </div>
       <div id='processing'>

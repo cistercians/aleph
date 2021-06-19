@@ -4,14 +4,14 @@ extract = async function(parent, urls, max, depth=0){
   var res = {};
   for(i in urls){
     var url = urls[i].href;
-    if(url === parent){
+    if(url == parent){
       continue;
     } else {
       var article = await parser.parseArticle({
         url: url,
         enabled: ['links', 'entities', 'keywords']
       });
-      if(article.title === undefined){
+      if(article.title == undefined){
         continue;
       } else if(depth < max){
         res[article.title.text] = {

@@ -6,12 +6,9 @@ var inputCode = document.getElementById('code-input');
 var menu = document.getElementById('menu');
 var feedDiv = document.getElementById('feed');
 var addKeywordsDiv = document.getElementById('add');
+var inputType = document.getElementById('type-input');
 var inputKeyword = document.getElementById('keyword-input');
 var keywordList = document.getElementById('keyword-list');
-var inputLocation = document.getElementById('location-input');
-var locationList = document.getElementById('location-list');
-var inputEntity = document.getElementById('entity-input');
-var entityList = document.getElementById('entity-list');
 var urlExtractDiv = document.getElementById('url-extract');
 var inputDiv = document.getElementById('input');
 var inputUrl = document.getElementById('url-input');
@@ -20,8 +17,6 @@ var extractButton = document.getElementById('extract');
 var processingDiv = document.getElementById('processing');
 var outputDiv = document.getElementById('output');
 var outKey = document.getElementById('out-key');
-var outEnt = document.getElementById('out-ent');
-var outLoc = document.getElementById('out-loc');
 
 // Mapbox.js
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2lzdGVyY2lhbmNhcGl0YWwiLCJhIjoiY2s5N2RsczhmMGU1dzNmdGEzdzU2YTZhbiJ9.-xDMU_9FYbMXJf3UD4ocCw';
@@ -96,6 +91,7 @@ var project = {};
 var incoming = {
   key: [],
   ent: [],
+  org: [],
   loc: []
 };
 
@@ -118,19 +114,10 @@ var clickAddKeywords = function(){
   urlExtractDiv.style.display = 'none';
 };
 
-var addKeyword = function(keyword){
-  socket.emit('addKeyword', keyword);
+var addKeyword = function(type,keyword){
+  socket.emit('addKeyword', {type:type,key:keyword});
+  inputType.value = null;
   inputKeyword.value = '';
-};
-
-var addLocation = function(keyword){
-  socket.emit('addLocation', keyword);
-  inputLocation.value = '';
-};
-
-var addEntity = function(keyword){
-  socket.emit('addEntity', keyword);
-  inputEntity.value = '';
 };
 
 var clickExtractUrl = function(){
@@ -148,34 +135,39 @@ var sendUrl = function(url, depth){
 };
 
 var showOutput = function(){
-  for(i in incoming.key){
-    outKey.innerHTML += '<li>' + incoming.key[i] + '</li>';
+  outKey.innerHTML = '';
+  for(i in incoming){
+    var inc = incoming[i];
+    for(n in inc){
+      outKey.innerHTML += '<li>' + inc[n] + "   <button onclick='deleteKey(&quot;" + inc[n] + "&quot;)'>x</button></li>";
+    }
   }
-  for(i in incoming.ent){
-    outEnt.innerHTML += '<li>' + incoming.ent[i] + '</li>';
-  }
-  for(i in incoming.loc){
-    outLoc.innerHTML += '<li>' + incoming.loc[i] + '</li>';
-  }
-  incoming = {
-    key: [],
-    ent: [],
-    loc: []
-  };
 };
+
+var deleteKey = function(key){
+  for(i in incoming){
+    var inc = incoming[i];
+    for(n in inc){
+      if(key == inc[n]){
+        delete inc[n];
+      }
+    }
+  }
+  showOutput();
+}
 
 var buildLists = function(){
   keywordList.innerHTML = '';
-  locationList.innerHTML = '';
-  entityList.innerHTML = '';
-  for(i in project.keywords){
-    keywordList.innerHTML += '<li>' + project.keywords[i] + '</li>';
-  }
-  for(i in project.locations){
-    locationList.innerHTML += '<li>' + project.locations[i] + '</li>';
-  }
-  for(i in project.entities){
-    entityList.innerHTML += '<li>' + project.entities[i] + '</li>';
+  for(i in project){
+    if(project[i].type == 'ent'){
+      keywordList.innerHTML += '<li>👤 ' + project[i].key + '</li>';
+    } else if(project[i].type == 'org'){
+      keywordList.innerHTML += '<li>🏢 ' + project[i].key + '</li>';
+    } else if(project[i].type == 'loc'){
+      keywordList.innerHTML += '<li>🌐 ' + project[i].key + '</li>';
+    } else {
+      keywordList.innerHTML += '<li>' + project[i].key + '</li>';
+    }
   }
 };
 
@@ -204,6 +196,16 @@ socket.on('ent', function(data){
   }
   incoming.ent.push(data);
   console.log('ent: ' + data);
+});
+
+socket.on('org', function(data){
+  for(i in incoming.org){
+    if(data == incoming.org[i]){
+      return;
+    }
+  }
+  incoming.org.push(data);
+  console.log('org: ' + data);
 });
 
 socket.on('loc', function(data){

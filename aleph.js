@@ -28,19 +28,15 @@ io.sockets.on('connection', function(socket){
   socket.on('disconnect',function(){
     delete SOCKET_LIST[socket.id];
     console.log('Socket disconnected: ' + socket.id);
-  });
+  })
 
   socket.on('code', function(data){
     socket.code = data;
     if(!CODES[data]){
-      CODES[data] = {
-        keywords: [],
-        locations: [],
-        entities: []
-      };
+      CODES[data] = {};
     }
     socket.emit('granted', CODES[data]);
-  });
+  })
 
   xport = function(data){
     console.log('xporting');
@@ -54,8 +50,8 @@ io.sockets.on('connection', function(socket){
       console.log('key: ' + data.keywords[i].keyword);
     }
     for(i in data.orgs){
-      socket.emit('ent', data.orgs[i].text);
-      console.log('ent: ' + data.orgs[i].text);
+      socket.emit('org', data.orgs[i].text);
+      console.log('org: ' + data.orgs[i].text);
     }
     for(i in data.people){
       socket.emit('ent', data.people[i].text);
@@ -68,13 +64,13 @@ io.sockets.on('connection', function(socket){
     for(i in data.links){
       xport(data.links[i]);
     }
-  };
+  }
 
   socket.on('url', async function(data){
     var output = await extract('', [{href: data.url}], data.depth);
     await xport(output[Object.keys(output)[0]]);
     socket.emit('output');
-  });
+  })
 
   socket.on('addKeyword', function(data){
     var keywords = CODES[socket.code].keywords;
@@ -83,29 +79,7 @@ io.sockets.on('connection', function(socket){
         return
       }
     }
-    CODES[socket.code].keywords.push(data);
-    socket.emit('granted', CODES[socket.code]);
-  });
-
-  socket.on('addLocation', function(data){
-    var keywords = CODES[socket.code].locations;
-    for(i in keywords){
-      if(data == keywords[i]){
-        return
-      }
-    }
-    CODES[socket.code].locations.push(data);
-    socket.emit('granted', CODES[socket.code]);
-  });
-
-  socket.on('addEntity', function(data){
-    var keywords = CODES[socket.code].entities;
-    for(i in keywords){
-      if(data == keywords[i]){
-        return
-      }
-    }
-    CODES[socket.code].entities.push(data);
+    CODES[socket.code].keywords[data.key] = {key:data.key,type:data.type};
     socket.emit('granted', CODES[socket.code]);
   })
 });
