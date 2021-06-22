@@ -11,6 +11,8 @@ var publicEye = require('public-eye')({
   });
 
 require('./server/js/extract');
+require('./server/js/combine');
+require('./server/js/search');
 
 app.get('/',function(req, res) {
   res.sendFile(__dirname + '/client/index.html');
@@ -33,7 +35,15 @@ io.sockets.on('connection', function(socket){
   socket.on('code', function(data){
     socket.code = data;
     if(!CODES[data]){
-      CODES[data] = {};
+      CODES[data] = {
+        code:data,
+        notifs:{feed:false},
+        feed:{},
+        archive:{},
+        keywords:{},
+        pairs:[],
+        connections:{}
+      };
     }
     socket.emit('granted', CODES[data]);
   })
@@ -67,20 +77,67 @@ io.sockets.on('connection', function(socket){
   }
 
   socket.on('url', async function(data){
-    var output = await extract('', [{href: data.url}], data.depth);
+    var output = await extract('', [{href: data.url}],data.depth);
     await xport(output[Object.keys(output)[0]]);
     socket.emit('output');
   })
 
   socket.on('addKeyword', function(data){
-    var keywords = CODES[socket.code].keywords;
-    for(i in keywords){
-      if(data == keywords[i]){
+    var keys = CODES[socket.code].keywords;
+    for(i in keys){
+      if(data.key == keys[i].key){
         return
       }
     }
-    CODES[socket.code].keywords[data.key] = {key:data.key,type:data.type};
+    CODES[socket.code].keywords[data.key] = {
+      id:Math.random(),
+      key:data.key,
+      type:data.type
+    }
     socket.emit('granted', CODES[socket.code]);
+  })
+
+  socket.on('launch', async function(){
+    await search(socket.code);
+    socket.emit('granted',CODES[socket.code])
+    socket.emit('search-complete');
+  })
+
+  socket.on('clear', function(data){
+    if(data == 'feed'){
+      CODES[socket.code].notifs.feed = false;
+    }
+  })
+
+  socket.on('archive', function(data){
+    CODES[socket.code].archive[data] = CODES[socket.code].feed[data];
+    CODES[socket.code].feed[data].discard = true;
+    socket.emit('granted',CODES[socket.code]);
+  })
+
+  socket.on('discard', function(data){
+    CODES[socket.code].feed[data].discard = true;
+    socket.emit('granted',CODES[socket.code]);
+  })
+
+  socket.on('edit-key', function(data){
+    var old = CODES[socket.code].keywords[data.old];
+    if(old.key == data.key){
+      CODES[socket.code].keywords[data.old].type = data.type;
+    } else {
+      CODES[socket.code].keywords[data.key] = {
+        id:Math.random(),
+        key:data.key,
+        type:data.type
+      }
+      delete CODES[socket.code].keywords[data.old];
+    }
+    socket.emit('granted',CODES[socket.code]);
+  })
+
+  socket.on('delete-key', function(data){
+    delete CODES[socket.code].keywords[data];
+    socket.emit('granted',CODES[socket.code]);
   })
 });
 

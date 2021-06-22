@@ -44,8 +44,18 @@
         background-color: black;
       }
 
-      li {
-        list-style-type: none;
+      table {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .notif {
+        color: black;
+        background-color: red;
+      }
+
+      .edit-mode {
+        display: none;
       }
 
       #map {
@@ -70,7 +80,15 @@
         display: none;
       }
 
-      #add {
+      #keywords {
+        display: none;
+      }
+
+      #launch-search {
+        display: none;
+      }
+
+      #archive {
         display: none;
       }
 
@@ -91,6 +109,10 @@
         overflow-y: scroll;
         display: none;
       }
+
+      #area-study {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -103,17 +125,26 @@
         <input type='submit' id='code-submit' value='SUBMIT' onclick='sendCode(inputCode.value)'>
       </div>
       <div id='menu'>
-        <button id='view-feed' onclick='clickViewFeed()'>VIEW FEED</button>
+        <button id='intel-feed' onclick='clickIntelFeed()'>INTEL FEED</button>
+        <button id='archive-button' onclick='clickArchive()'>ARCHIVE</button>
         <button id='add-keywords' onclick='clickAddKeywords()'>KEYWORDS</button>
         <button id='extract-url' onclick='clickExtractUrl()'>URL EXTRACT</button>
+        <button id='area-study-button' onClick='clickAreaStudy()'>AREA STUDY</button>
         <br>
         <br>
         <hr>
         <br>
       </div>
       <div id='feed'>
+        <table id='feed-table'></table>
       </div>
-      <div id ='add'>
+      <div id='archive'>
+        <div>
+          <select id='archive-select'></select>
+        </div>
+        <table id='archive-table'></table>
+      </div>
+      <div id ='keywords'>
         <select id='type-input'>
           <option value=null></option>
           <option value='ent'>👤</option>
@@ -123,8 +154,12 @@
         <input type='text' id='keyword-input' name='keyword-input'>
         <input type='submit' id='keyword-input-add' value='ADD' onclick='addKeyword(inputType.value,inputKeyword.value)'>
         <br>
+        <br>
+        <button id='launch-search' onclick='launch()'>LAUNCH</button>
+        <br>
+        <br>
         <div>
-          <ul id='keyword-list'></ul>
+          <table id='keyword-list'></table>
         </div>
         <br>
         <br>
@@ -141,13 +176,17 @@
           <input type='submit' id='extract' value='EXTRACT' onclick='sendUrl(inputUrl.value, inputDepth.value)'>
         </div>
         <div id='output'>
-          <p>OUTPUT:</p>
+          <input type='submit' id='out-submit' value='SUBMIT' onclick='submitKeys()'>
+          <button onclick='clearOutput()'>CLEAR</button>
+          <br>
+          <br>
           <div id='out-key'></div>
         </div>
       </div>
       <div id='processing'>
         <img src='client/3va2.gif' id='processing-gif'></img>
       </div>
+      <div id='area-study'></div>
     </div>
     <script src="client/js/socket.js"></script>
     <script src="client/js/client.js"></script>

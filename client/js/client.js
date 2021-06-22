@@ -4,10 +4,17 @@ var socket = io({transports: ['websocket'], upgrade: false});
 var codeDiv = document.getElementById('code');
 var inputCode = document.getElementById('code-input');
 var menu = document.getElementById('menu');
+var intelFeed = document.getElementById('intel-feed');
 var feedDiv = document.getElementById('feed');
-var addKeywordsDiv = document.getElementById('add');
+var feedTable = document.getElementById('feed-table');
+var archive = document.getElementById('archive-button');
+var archiveDiv = document.getElementById('archive');
+var archiveSel = document.getElementById('archive-select');
+var archiveTable = document.getElementById('archive-table');
+var keywordsDiv = document.getElementById('keywords');
 var inputType = document.getElementById('type-input');
 var inputKeyword = document.getElementById('keyword-input');
+var launchSearch = document.getElementById('launch-search');
 var keywordList = document.getElementById('keyword-list');
 var urlExtractDiv = document.getElementById('url-extract');
 var inputDiv = document.getElementById('input');
@@ -17,6 +24,8 @@ var extractButton = document.getElementById('extract');
 var processingDiv = document.getElementById('processing');
 var outputDiv = document.getElementById('output');
 var outKey = document.getElementById('out-key');
+var outSubmit = document.getElementById('out-submit');
+var areaStudyDiv = document.getElementById('area-study');
 
 // Mapbox.js
 mapboxgl.accessToken = 'pk.eyJ1IjoiY2lzdGVyY2lhbmNhcGl0YWwiLCJhIjoiY2s5N2RsczhmMGU1dzNmdGEzdzU2YTZhbiJ9.-xDMU_9FYbMXJf3UD4ocCw';
@@ -87,6 +96,7 @@ map.on('load', function(){
   );
 });
 
+// LOG IN
 var project = {};
 var incoming = {
   key: [],
@@ -102,28 +112,142 @@ var sendCode = function(code){
   }
 };
 
-var clickViewFeed = function(){
+// INTEL FEED
+var clickIntelFeed = function(){
   feedDiv.style.display = 'inline';
-  addKeywordsDiv.style.display = 'none';
+  archiveDiv.style.disply = 'none';
+  keywordsDiv.style.display = 'none';
   urlExtractDiv.style.display = 'none';
+  areaStudyDiv.style.display = 'none';
+  intelFeed.className = null;
+  project.notifs.feed = false;
+  socket.emit('clear','feed');
 };
 
+var popFeed = function(){
+  feedTable.innerHTML = '';
+  for(i in project.feed){
+    var u = project.feed[i];
+    if(!u.discard){
+      feedTable.innerHTML += "<tr><td><button onclick='archiveLink(&quot;" + u.url + "&quot;)'>📁</button><button onclick='discardLink(&quot;" + u.url + "&quot;)'>x</button></td><td><a href='" + u.url + "' target='_blank'>" + u.title + '</td><td>' + u.pair + '</td></tr>';
+    }
+  }
+};
+
+var archiveLink = function(link){
+  socket.emit('archive',link);
+};
+
+var discardLink = function(link){
+  socket.emit('discard',link);
+};
+
+// ARCHIVE
+var clickArchive = function(){
+  feedDiv.style.display = 'none';
+  archiveDiv.style.disply = 'inline';
+  keywordsDiv.style.display = 'none';
+  urlExtractDiv.style.display = 'none';
+  areaStudyDiv.style.display = 'none';
+};
+
+var buildArchive = function(){
+
+};
+
+var inspectLink = function(link){
+  inputUrl.value = link;
+  archiveDiv.style.display = 'none';
+  urlExtractDiv.style.display = 'inline';
+};
+
+// KEYWORDS
 var clickAddKeywords = function(){
   feedDiv.style.display = 'none';
-  addKeywordsDiv.style.display = 'inline';
+  archiveDiv.style.disply = 'none';
+  keywordsDiv.style.display = 'inline';
   urlExtractDiv.style.display = 'none';
+  areaStudyDiv.style.display = 'none';
+};
+
+var buildList = function(){
+  keywordList.innerHTML = '';
+  for(i in project.keywords){
+    var k = project.keywords[i];
+    if(k.type == 'ent'){
+      keywordList.innerHTML += "<tr id='" + k.id + "'><td>👤</td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+    } else if(k.type == 'org'){
+      keywordList.innerHTML += "<tr id='" + k.id + "'><td>🏢</td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+    } else if(k.type == 'loc'){
+      keywordList.innerHTML += "<tr id='" + k.id + "'><td>🌐</td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+    } else {
+      keywordList.innerHTML += "<tr id='" + k.id + "'><td></td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+    }
+  }
+  if(Object.keys(project.keywords).length > 1){
+    launchSearch.style.display = 'inline';
+  }
 };
 
 var addKeyword = function(type,keyword){
-  socket.emit('addKeyword', {type:type,key:keyword});
-  inputType.value = null;
-  inputKeyword.value = '';
+  if(keyword !== ''){
+    socket.emit('addKeyword', {key:keyword,type:type});
+    inputType.value = null;
+    inputKeyword.value = '';
+  }
 };
 
+var launch = function(){
+  launchSearch.disabled = true;
+  socket.emit('launch',project.code);
+};
+
+var editKey = function(id,key){
+  var str = String(id);
+  var k = project.keywords[key];
+  var t = k.type;
+  var row = document.getElementById(str);
+  var type = null;
+  if(k.type == 'ent'){
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent' selected>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option></select></td>";
+  } else if(k.type == 'org'){
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org' selected>🏢</option><option value='loc'>🌐</option></select></td>";
+  } else if(k.type == 'loc'){
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc' selected>🌐</option></select></td>";
+  } else {
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option></select></td>";
+  }
+  var keyword = "<td><input type='text' id='" + id + "-key' value='" + k.key + "'></input></td>";
+  var submit = "<button onclick='submitEdit(&quot;" + id + "&quot;,&quot;" + k.key + "&quot;)'>✔</button>";
+  var cancel = "<button onclick='buildList()'>⟲</button>";
+  var del = "<button onclick='deleteKey(&quot;" + k.key + "&quot;)'>x</button>";
+  row.innerHTML = type + ' ' + keyword + ' ' + '<td>' + submit + cancel + del + '</td>';
+};
+
+var submitEdit = function(id,key){
+  var old = project.keywords[key];
+  var type = document.getElementById(id+'-type');
+  var input = document.getElementById(id+'-key');
+  var newType = type.value;
+  var newKey = input.value;
+  if(newType == old.type && newKey == old.key){
+    buildList();
+  } else {
+    socket.emit('edit-key',{old:key,type:newType,key:newKey});
+  }
+};
+
+var deleteKey = function(key){
+  socket.emit('delete-key',key);
+};
+
+// EXTRACT URL
 var clickExtractUrl = function(){
   feedDiv.style.display = 'none';
-  addKeywordsDiv.style.display = 'none';
+  archiveDiv.style.disply = 'none';
+  keywordsDiv.style.display = 'none';
   urlExtractDiv.style.display = 'inline';
+  areaStudyDiv.style.display = 'none';
 };
 
 var sendUrl = function(url, depth){
@@ -136,15 +260,33 @@ var sendUrl = function(url, depth){
 
 var showOutput = function(){
   outKey.innerHTML = '';
-  for(i in incoming){
-    var inc = incoming[i];
+  for(i in incoming.key){
+    var inc = incoming.key[i];
     for(n in inc){
-      outKey.innerHTML += '<li>' + inc[n] + "   <button onclick='deleteKey(&quot;" + inc[n] + "&quot;)'>x</button></li>";
+      outKey.innerHTML += '<li>' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
+    }
+  }
+  for(i in incoming.ent){
+    var inc = incoming.ent[i];
+    for(n in inc){
+      outKey.innerHTML += '<li>👤 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
+    }
+  }
+  for(i in incoming.org){
+    var inc = incoming.org[i];
+    for(n in inc){
+      outKey.innerHTML += '<li>🏢 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
+    }
+  }
+  for(i in incoming.loc){
+    var inc = incoming.loc[i];
+    for(n in inc){
+      outKey.innerHTML += '<li>🌐 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
     }
   }
 };
 
-var deleteKey = function(key){
+var deleteInc = function(key){
   for(i in incoming){
     var inc = incoming[i];
     for(n in inc){
@@ -154,28 +296,53 @@ var deleteKey = function(key){
     }
   }
   showOutput();
-}
+};
 
-var buildLists = function(){
-  keywordList.innerHTML = '';
-  for(i in project){
-    if(project[i].type == 'ent'){
-      keywordList.innerHTML += '<li>👤 ' + project[i].key + '</li>';
-    } else if(project[i].type == 'org'){
-      keywordList.innerHTML += '<li>🏢 ' + project[i].key + '</li>';
-    } else if(project[i].type == 'loc'){
-      keywordList.innerHTML += '<li>🌐 ' + project[i].key + '</li>';
-    } else {
-      keywordList.innerHTML += '<li>' + project[i].key + '</li>';
-    }
+var submitKeys = function(){
+  for(i in incoming.key){
+    socket.emit('addKeyword', {key:incoming.key[i],type:null});
   }
+  for(i in incoming.ent){
+    socket.emit('addKeyword', {key:incoming.key[i],type:'ent'});
+  }
+  for(i in incoming.org){
+    socket.emit('addKeyword', {key:incoming.key[i],type:'org'});
+  }
+  for(i in incoming.loc){
+    socket.emit('addKeyword', {key:incoming.key[i],type:'loc'});
+  }
+};
+
+var clearOutput = function(){
+  incoming = {
+    key: [],
+    ent: [],
+    org: [],
+    loc: []
+  }
+  outputDiv.style.display = 'none';
+  inputDiv.style.display = 'inline';
+};
+
+// AREA STUDY
+var clickAreaStudy = function(){
+  feedDiv.style.display = 'none';
+  keywordsDiv.style.display = 'none';
+  urlExtractDiv.style.display = 'none';
+  areaStudyDiv.style.display = 'inline';
 };
 
 socket.on('granted', function(data){
   project = data;
-  buildLists();
+  if(project.notifs.feed){
+    intelFeed.className = 'notif';
+  }
+  popFeed();
+  buildArchive();
+  buildList();
   codeDiv.style.display = 'none';
   menu.style.display = 'inline';
+  console.log(project);
 });
 
 socket.on('key', function(data){
@@ -224,3 +391,7 @@ socket.on('output', function(){
   outputDiv.style.display = 'inline';
   urlExtractDiv.style.display = 'inline';
 });
+
+socket.on('search-complete', function(){
+  launchSearch.disabled = false;
+})
