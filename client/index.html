@@ -92,6 +92,10 @@
         display: none;
       }
 
+      #archive-select {
+        display: none;
+      }
+
       #url-extract {
         display: none;
       }
@@ -181,13 +185,15 @@
           <button onclick='clearOutput()'>CLEAR</button>
           <br>
           <br>
-          <div id='out-key'></div>
+          <div>
+            <table id='out-key'></table>
+          </div>
         </div>
       </div>
+      <div id='area-study'></div>
       <div id='processing'>
         <img src='client/3va2.gif' id='processing-gif'></img>
       </div>
-      <div id='area-study'></div>
     </div>
     <script src="client/js/socket.js"></script>
     <script src="client/js/client.js"></script>

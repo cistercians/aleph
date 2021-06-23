@@ -152,6 +152,9 @@ var clickArchive = function(){
 };
 
 var buildArchive = function(key){
+  if(Object.keys(project.archive).length > 0){
+    archiveSel.style.display = 'inline';
+  }
   archiveTable.innerHTML = '';
   archiveSel.innerHTML = '<option value=null></option>';
   for(i in project.keywords){
@@ -226,6 +229,8 @@ var addKeyword = function(type,keyword){
 var launch = function(){
   launchSearch.disabled = true;
   socket.emit('launch',project.code);
+  keywordsDiv.style.display = 'none';
+  processingDiv.style.display = 'inline';
 };
 
 var editKey = function(id,key){
@@ -288,27 +293,19 @@ var showOutput = function(){
   outKey.innerHTML = '';
   for(i in incoming.key){
     var inc = incoming.key[i];
-    for(n in inc){
-      outKey.innerHTML += '<li>' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
-    }
+    outKey.innerHTML += '<tr><td></td><td>' + inc + "</td><td><button onclick='deleteInc(&quot;" + inc + "&quot;)'>x</button></td></tr>";
   }
   for(i in incoming.ent){
     var inc = incoming.ent[i];
-    for(n in inc){
-      outKey.innerHTML += '<li>👤 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
-    }
+    outKey.innerHTML += '<tr><td>👤</td><td>' + inc + "</td><td><button onclick='deleteInc(&quot;" + inc + "&quot;)'>x</button></td></tr>";
   }
   for(i in incoming.org){
     var inc = incoming.org[i];
-    for(n in inc){
-      outKey.innerHTML += '<li>🏢 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
-    }
+    outKey.innerHTML += '<tr><td>🏢</td><td>' + inc + "</td><td><button onclick='deleteInc(&quot;" + inc + "&quot;)'>x</button></td></tr>";
   }
   for(i in incoming.loc){
     var inc = incoming.loc[i];
-    for(n in inc){
-      outKey.innerHTML += '<li>🌐 ' + inc[n] + "   <button onclick='deleteInc(&quot;" + inc[n] + "&quot;)'>x</button></li>";
-    }
+    outKey.innerHTML += '<tr><td>🌐</td><td>' + inc + "</td><td><button onclick='deleteInc(&quot;" + inc + "&quot;)'>x</button></td></tr>";
   }
 };
 
@@ -329,14 +326,15 @@ var submitKeys = function(){
     socket.emit('addKeyword', {key:incoming.key[i],type:null});
   }
   for(i in incoming.ent){
-    socket.emit('addKeyword', {key:incoming.key[i],type:'ent'});
+    socket.emit('addKeyword', {key:incoming.ent[i],type:'ent'});
   }
   for(i in incoming.org){
-    socket.emit('addKeyword', {key:incoming.key[i],type:'org'});
+    socket.emit('addKeyword', {key:incoming.org[i],type:'org'});
   }
   for(i in incoming.loc){
-    socket.emit('addKeyword', {key:incoming.key[i],type:'loc'});
+    socket.emit('addKeyword', {key:incoming.loc[i],type:'loc'});
   }
+  clearOutput();
 };
 
 var clearOutput = function(){
@@ -420,4 +418,6 @@ socket.on('output', function(){
 
 socket.on('search-complete', function(){
   launchSearch.disabled = false;
+  processingDiv.style.display = 'none';
+  keywordsDiv.style.display = 'inline';
 })

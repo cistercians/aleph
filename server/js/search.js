@@ -5,7 +5,7 @@ search = async function(code){
   var out = [];
   for(i in CODES[code].pairs){
     var pair = CODES[code].pairs[i];
-    var q = pair[0] + '+AND+' + pair[1];
+    var q = pair[0] + ' ' + pair[1];
     console.log('SEARCHING: ' + pair[0] + ' + ' + pair[1]);
     const links = await serp.search({qs:{q:q,filters:0,pws:0},num:100});
     if(links){
