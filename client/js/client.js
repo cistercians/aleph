@@ -115,7 +115,7 @@ var sendCode = function(code){
 // INTEL FEED
 var clickIntelFeed = function(){
   feedDiv.style.display = 'inline';
-  archiveDiv.style.disply = 'none';
+  archiveDiv.style.display = 'none';
   keywordsDiv.style.display = 'none';
   urlExtractDiv.style.display = 'none';
   areaStudyDiv.style.display = 'none';
@@ -145,14 +145,36 @@ var discardLink = function(link){
 // ARCHIVE
 var clickArchive = function(){
   feedDiv.style.display = 'none';
-  archiveDiv.style.disply = 'inline';
+  archiveDiv.style.display = 'inline';
   keywordsDiv.style.display = 'none';
   urlExtractDiv.style.display = 'none';
   areaStudyDiv.style.display = 'none';
 };
 
-var buildArchive = function(){
-
+var buildArchive = function(key){
+  archiveTable.innerHTML = '';
+  archiveSel.innerHTML = '<option value=null></option>';
+  for(i in project.keywords){
+    var k = project.keywords[i];
+    if(k.key == key){
+      archiveSel.innerHTML += "<option value='" + k.key + "' selected>" + k.key + "</option>";
+    } else {
+      archiveSel.innerHTML += "<option value='" + k.key + "'>" + k.key + "</option>";
+    }
+  }
+  if(key){
+    for(n in project.archive){
+      var link = project.archive[n];
+      if(link.pairs[0] == key || link.pairs[1] == key){
+        archiveTable.innerHTML += "<tr><td><button onclick='inspectLink(&quot;" + link.url + "&quot;)'>🔍</button><button onclick='unarchive(&quot;" + link.url + "&quot;)'>x</button></td><td><a href='" + link.url + "' target='_blank'>" + link.title + '</td><td>' + link.pair + '</td></tr>';
+      }
+    }
+  } else {
+    for(n in project.archive){
+      var link = project.archive[n];
+      archiveTable.innerHTML += "<tr><td><button onclick='inspectLink(&quot;" + link.url + "&quot;)'>🔍</button><button onclick='unarchive(&quot;" + link.url + "&quot;)'>x</button></td><td><a href='" + link.url + "' target='_blank'>" + link.title + '</td><td>' + link.pair + '</td></tr>';
+    }
+  }
 };
 
 var inspectLink = function(link){
@@ -161,10 +183,14 @@ var inspectLink = function(link){
   urlExtractDiv.style.display = 'inline';
 };
 
+var unarchive = function(link){
+  socket.emit('unarchive',link);
+};
+
 // KEYWORDS
-var clickAddKeywords = function(){
+var clickKeywords = function(){
   feedDiv.style.display = 'none';
-  archiveDiv.style.disply = 'none';
+  archiveDiv.style.display = 'none';
   keywordsDiv.style.display = 'inline';
   urlExtractDiv.style.display = 'none';
   areaStudyDiv.style.display = 'none';
@@ -244,7 +270,7 @@ var deleteKey = function(key){
 // EXTRACT URL
 var clickExtractUrl = function(){
   feedDiv.style.display = 'none';
-  archiveDiv.style.disply = 'none';
+  archiveDiv.style.display = 'none';
   keywordsDiv.style.display = 'none';
   urlExtractDiv.style.display = 'inline';
   areaStudyDiv.style.display = 'none';

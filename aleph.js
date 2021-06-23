@@ -120,6 +120,12 @@ io.sockets.on('connection', function(socket){
     socket.emit('granted',CODES[socket.code]);
   })
 
+  socket.on('unarchive', function(data){
+    delete CODES[socket.code].archive[data];
+    CODES[socket.code].feed[data].discard = false;
+    socket.emit('granted',CODES[socket.code]);
+  })
+
   socket.on('edit-key', function(data){
     var old = CODES[socket.code].keywords[data.old];
     if(old.key == data.key){
