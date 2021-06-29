@@ -2,17 +2,11 @@ var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-var publicEye = require('public-eye')({
-    services: {
-      geonames: {
-        username: 'alephapp'
-      }
-    }
-  });
 
 require('./server/js/extract');
 require('./server/js/combine');
 require('./server/js/search');
+require('./server/js/locate');
 
 app.get('/',function(req, res) {
   res.sendFile(__dirname + '/client/index.html');
@@ -99,8 +93,23 @@ io.sockets.on('connection', function(socket){
 
   socket.on('launch', async function(){
     await search(socket.code);
-    socket.emit('granted',CODES[socket.code])
+    socket.emit('granted',CODES[socket.code]);
     socket.emit('search-complete');
+  })
+
+  socket.on('get-loc', async function(data){
+    var loc = await locate(socket.code,data);
+    socket.emit('granted',CODES[socket.code]);
+  })
+
+  socket.on('event-loc', function(data){
+    CODES[socket.code].keywords[data.key].loc = data.loc;
+    socket.emit('granted',CODES[socket.code]);
+  })
+
+  socket.on('event-time', function(data){
+    CODES[socket.code].keywords[data.key].time = data.time;
+    socket.emit('granted',CODES[socket.code]);
   })
 
   socket.on('clear', function(data){

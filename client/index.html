@@ -5,10 +5,10 @@
     <title>ALEPH</title>
 
     <!-- Mapbox.js -->
-    <script src='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.js'></script>
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.min.js"></script>
-    <link href='https://api.mapbox.com/mapbox-gl-js/v1.8.1/mapbox-gl.css' rel='stylesheet' />
-    <link href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.5.1/mapbox-gl-geocoder.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js'></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css' rel='stylesheet' />
+    <link href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css' rel='stylesheet' />
 
     <style>
       html, body {
@@ -129,6 +129,7 @@
         <input type='submit' id='code-submit' value='SUBMIT' onclick='sendCode(inputCode.value)'>
       </div>
       <div id='menu'>
+        <button id='home-view' onclick='homeView()'>🌐</button>
         <button id='intel-feed' onclick='clickIntelFeed()'>INTEL FEED</button>
         <button id='archive-button' onclick='clickArchive()'>ARCHIVE</button>
         <button id='add-keywords' onclick='clickKeywords()'>KEYWORDS</button>
@@ -155,6 +156,7 @@
           <option value='ent'>👤</option>
           <option value='org'>🏢</option>
           <option value='loc'>🌐</option>
+          <option value='event'>📅</option>
         </select>
         <input type='text' id='keyword-input' name='keyword-input'>
         <input type='submit' id='keyword-input-add' value='ADD' onclick='addKeyword(inputType.value,inputKeyword.value)'>

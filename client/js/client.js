@@ -39,6 +39,15 @@ var map = new mapboxgl.Map({
   antialias: true
 });
 
+// Points of interest
+var poi = {
+  'type':'geosjson',
+  'data':{
+    'type':'FeatureCollection',
+    'features':[]
+  }
+};
+
 // The 'building' layer in the mapbox-streets vector source contains building-height
 // data from OpenStreetMap.
 map.on('load', function(){
@@ -95,6 +104,10 @@ map.on('load', function(){
     })
   );
 });
+
+var homeView = function(){
+
+};
 
 // LOG IN
 var project = {};
@@ -200,6 +213,7 @@ var clickKeywords = function(){
 };
 
 var buildList = function(){
+  poi['data']['features'] = [];
   keywordList.innerHTML = '';
   for(i in project.keywords){
     var k = project.keywords[i];
@@ -208,7 +222,32 @@ var buildList = function(){
     } else if(k.type == 'org'){
       keywordList.innerHTML += "<tr id='" + k.id + "'><td>🏢</td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
     } else if(k.type == 'loc'){
-      keywordList.innerHTML += "<tr id='" + k.id + "'><td>🌐</td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      if(k.loc){
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>🌐</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        var feature = {
+          'type':'Feature',
+          'properties':{
+            'description':'<strong>' + k.key + '</strong>'
+          },
+          'geometry':{
+            'type':'Point',
+            'coordinates':k.loc
+          }
+        };
+        poi['data']['features'].push(feature);
+      } else {
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>🌐</td><td>" + k.key + "</td><td><button class='notif' onclick='getLoc(&quot;" + k.key + "&quot;)'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      }
+    } else if(k.type == 'event'){
+      if(!k.loc && !k.time){
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      } else if(!k.loc && k.time){
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      } else if(k.loc && !k.time){
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      } else {
+        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      }
     } else {
       keywordList.innerHTML += "<tr id='" + k.id + "'><td></td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
     }
@@ -240,13 +279,15 @@ var editKey = function(id,key){
   var row = document.getElementById(str);
   var type = null;
   if(k.type == 'ent'){
-    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent' selected>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option></select></td>";
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent' selected>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option><option value='event'>📅</option></select></td>";
   } else if(k.type == 'org'){
-    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org' selected>🏢</option><option value='loc'>🌐</option></select></td>";
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org' selected>🏢</option><option value='loc'>🌐</option><option value='event'>📅</option></select></td>";
   } else if(k.type == 'loc'){
-    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc' selected>🌐</option></select></td>";
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc' selected>🌐</option><option value='event'>📅</option></select></td>";
+  } else if(k.type == 'event'){
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option><option value='event' selected>📅</option></select></td>";
   } else {
-    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option></select></td>";
+    type = "<td><select id='" + id + "-type'><option value=null></option><option value='ent'>👤</option><option value='org'>🏢</option><option value='loc'>🌐</option><option value='event'>📅</option></select></td>";
   }
   var keyword = "<td><input type='text' id='" + id + "-key' value='" + k.key + "'></input></td>";
   var submit = "<button onclick='submitEdit(&quot;" + id + "&quot;,&quot;" + k.key + "&quot;)'>✔</button>";
@@ -271,6 +312,41 @@ var submitEdit = function(id,key){
 var deleteKey = function(key){
   socket.emit('delete-key',key);
 };
+
+var getLoc = function(loc){
+  socket.emit('get-loc',loc);
+};
+
+var eventLoc = function(id,key){
+  var str = String(id);
+  var row = document.getElementById(str);
+  var opts = '';
+  for(i in project.keywords){
+    var k = project.keywords[i];
+    if(k.type == 'loc' && k.loc){
+      opts += "<option value='" + k.key + "'>" + k.key + "</option>";
+    }
+  }
+  row.innerHTML = "<td>📅</td><td>" + key + "</td><td><select id='" + id + "-loc'>" + opts + "</td><button onclick='submitLoc(" + id + ",&quot;" + key + "&quot;)'>✔</button></td>";
+};
+
+var submitLoc = function(id,key){
+  var sel = document.getElementById(id+'-loc').value;
+  var loc = project.keywords[sel].loc;
+  socket.emit('event-loc',{key:key,loc:loc});
+};
+
+var getTime = function(id,key){
+  var str = String(id);
+  var row = document.getElementById(str);
+  row.innerHTML = "<td>📅</td><td>" + key + "</td><td><input id='" + id + "-date' type='datetime-local'><button onclick='submitTime(" + id + ",&quot;" + key + "&quot;)'>✔</button></td>";
+};
+
+var submitTime = function(id,key){
+  var dt = document.getElementById(id+'-date');
+  var time = dt.value;
+  socket.emit('event-time',{key:key,time:time});
+}
 
 // EXTRACT URL
 var clickExtractUrl = function(){
