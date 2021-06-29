@@ -21,6 +21,6 @@
     "horseman-article-parser": "^0.8.1",
     "node-geocoder": "^3.27.0",
     "serp": "^2.1.0",
-    "socket.io": "^2.3.0"
+    "socket.io": "^2.4.0"
   }
 }
