@@ -103,6 +103,49 @@ map.on('load', function(){
       mapboxgl: mapboxgl
     })
   );
+
+  // Add a layer showing the places.
+  map.addLayer({
+  'id': 'places',
+  'type': 'circle',
+  'source': 'places',
+  'paint': {
+  'circle-color': '#4264fb',
+  'circle-radius': 6,
+  'circle-stroke-width': 2,
+  'circle-stroke-color': '#ffffff'
+  }
+  });
+
+  // Create a popup, but don't add it to the map yet.
+  var popup = new mapboxgl.Popup({
+  closeButton: false,
+  closeOnClick: false
+  });
+
+  map.on('mouseenter', 'places', function (e) {
+  // Change the cursor style as a UI indicator.
+  map.getCanvas().style.cursor = 'pointer';
+
+  var coordinates = e.features[0].geometry.coordinates.slice();
+  var description = e.features[0].properties.description;
+
+  // Ensure that if the map is zoomed out such that multiple
+  // copies of the feature are visible, the popup appears
+  // over the copy being pointed to.
+  while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+  coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+  }
+
+  // Populate the popup and set its coordinates
+  // based on the feature found.
+  popup.setLngLat(coordinates).setHTML(description).addTo(map);
+  });
+
+  map.on('mouseleave', 'places', function () {
+  map.getCanvas().style.cursor = '';
+  popup.remove();
+  });
 });
 
 var homeView = function(){
@@ -239,14 +282,29 @@ var buildList = function(){
         keywordList.innerHTML += "<tr id='" + k.id + "'><td>🌐</td><td>" + k.key + "</td><td><button class='notif' onclick='getLoc(&quot;" + k.key + "&quot;)'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
       }
     } else if(k.type == 'event'){
-      if(!k.loc && !k.time){
-        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
-      } else if(!k.loc && k.time){
-        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
-      } else if(k.loc && !k.time){
-        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+      if(k.loc){
+        var feature = {
+          'type':'Feature',
+          'properties':{
+            'description':'<strong>' + k.key + '</strong>'
+          },
+          'geometry':{
+            'type':'Point',
+            'coordinates':k.loc
+          }
+        };
+        poi['data']['features'].push(feature);
+        if(k.time){
+          keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        } else {
+          keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        }
       } else {
-        keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button onclick='map.flyTo({center:[" + k.loc + "],essential:true})'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        if(k.time){
+          keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        } else {
+          keywordList.innerHTML += "<tr id='" + k.id + "'><td>📅</td><td>" + k.key + "</td><td><button class='notif' onclick='eventLoc(" + k.id + ",&quot;" + k.key + "&quot;)'>⌖</button><button class='notif' onclick='getTime(" + k.id + ",&quot;" + k.key + "&quot;)'>⏱</button><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
+        }
       }
     } else {
       keywordList.innerHTML += "<tr id='" + k.id + "'><td></td><td>" + k.key + "</td><td><button onclick='editKey(" + k.id + ",&quot;" + k.key + "&quot;)'>✎</button></td></tr>";
