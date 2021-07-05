@@ -41,7 +41,7 @@ var map = new mapboxgl.Map({
 
 // Points of interest
 var poi = {
-  'type':'geosjson',
+  'type':'geojson',
   'data':{
     'type':'FeatureCollection',
     'features':[]
@@ -103,53 +103,42 @@ map.on('load', function(){
       mapboxgl: mapboxgl
     })
   );
-
-  // Add a layer showing the places.
-  map.addLayer({
-  'id': 'places',
-  'type': 'circle',
-  'source': 'places',
-  'paint': {
-  'circle-color': '#4264fb',
-  'circle-radius': 6,
-  'circle-stroke-width': 2,
-  'circle-stroke-color': '#ffffff'
-  }
-  });
-
-  // Create a popup, but don't add it to the map yet.
-  var popup = new mapboxgl.Popup({
-  closeButton: false,
-  closeOnClick: false
-  });
-
-  map.on('mouseenter', 'places', function (e) {
-  // Change the cursor style as a UI indicator.
-  map.getCanvas().style.cursor = 'pointer';
-
-  var coordinates = e.features[0].geometry.coordinates.slice();
-  var description = e.features[0].properties.description;
-
-  // Ensure that if the map is zoomed out such that multiple
-  // copies of the feature are visible, the popup appears
-  // over the copy being pointed to.
-  while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-  coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-  }
-
-  // Populate the popup and set its coordinates
-  // based on the feature found.
-  popup.setLngLat(coordinates).setHTML(description).addTo(map);
-  });
-
-  map.on('mouseleave', 'places', function () {
-  map.getCanvas().style.cursor = '';
-  popup.remove();
-  });
 });
 
 var homeView = function(){
-
+  buildList();
+  var llong = null;
+  var llat = null;
+  var hlong = null;
+  var hlat = null;
+  for(i in poi['data']['features']){
+    var p = poi['data']['features'][i]['geometry']['coordinates'];
+    if(!llong){
+      llong = p[0];
+    } else if(p[0] < llong){
+      llong = p[0];
+    }
+    if(!hlong){
+      hlong = p[0];
+    } else if(p[0] > hlong){
+      hlong = p[0];
+    }
+    if(!llat){
+      llat = p[1];
+    } else if(p[1] < llat){
+      llat = p[1];
+    }
+    if(!hlat){
+      hlat = p[1];
+    } else if(p[1] > hlat){
+      hlat = p[1];
+    }
+  }
+  var mlong = (hlong - llong) * 0.2;
+  var mlat = (hlat - llat) * 0.1;
+  var sw = [llong-mlong,llat-mlat];
+  var ne = [hlong,hlat];
+  map.fitBounds([sw,ne]);
 };
 
 // LOG IN
@@ -500,6 +489,18 @@ socket.on('granted', function(data){
   buildList();
   codeDiv.style.display = 'none';
   menu.style.display = 'inline';
+  map.addSource('poi',poi);
+  map.addLayer({
+    'id': 'poi',
+    'type': 'circle',
+    'source': 'poi',
+    'paint': {
+    'circle-color': '#4264fb',
+    'circle-radius': 6,
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff'
+    }
+  });
   console.log(project);
 });
 
