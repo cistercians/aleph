@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/jonargyne/aleph#readme",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "horseman-article-parser": "^0.8.1",
     "node-geocoder": "^3.27.0",
     "serp": "^2.1.0",
